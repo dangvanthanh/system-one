@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2048 · System One v1</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #faf8ef;
+        color: #776e65;
+        font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        padding: 22px 16px 48px;
+      }
+
+      .game {
+        margin: 0 auto;
+        max-width: 1280px;
+      }
+
+      .brand {
+        align-items: baseline;
+        display: flex;
+        font-size: 15px;
+        font-weight: bold;
+        gap: 8px;
+      }
+
+      .brand-version {
+        background: #bbada0;
+        border-radius: 3px;
+        color: #faf8ef;
+        font-size: 11px;
+        padding: 2px 6px;
+      }
+
+      .page-head {
+        align-items: baseline;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin: 14px 0 4px;
+      }
+
+      h1 {
+        font-size: 58px;
+        font-weight: bold;
+        line-height: 1;
+        margin: 0;
+      }
+
+      .subtitle {
+        color: #bbada0;
+        font-size: 14px;
+        font-weight: bold;
+        margin: 0;
+      }
+
+      .controls {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 18px 0 22px;
+      }
+
+      button {
+        background: #8f7a66;
+        border: 0;
+        border-radius: 5px;
+        color: #f9f6f2;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: bold;
+        padding: 10px 16px;
+        transition: background-color 0.15s;
+      }
+
+      button:hover:not(:disabled) {
+        background: #9f8a76;
+      }
+
+      button[aria-pressed="true"] {
+        background: #f67c5f;
+      }
+
+      button:disabled {
+        cursor: default;
+        opacity: 0.6;
+      }
+
+      .seed {
+        color: #bbada0;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .boards {
+        display: grid;
+        gap: 28px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .panel {
+        min-width: 0;
+      }
+
+      .panel-head {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      h2 {
+        font-size: 19px;
+        font-weight: bold;
+        margin: 0;
+      }
+
+      .score-container {
+        background: #bbada0;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        padding: 6px 14px;
+        text-align: center;
+      }
+
+      .score-container span {
+        color: #eee4da;
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+      }
+
+      .score-value {
+        font-size: 22px;
+        line-height: 1.2;
+      }
+
+      .stats {
+        display: flex;
+        gap: 6px;
+      }
+
+      .stat {
+        padding: 4px 10px;
+      }
+
+      .stat .score-value {
+        font-size: 15px;
+      }
+
+      .board {
+        aspect-ratio: 1;
+        background: #bbada0;
+        border-radius: 6px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        padding: 12px;
+      }
+
+      .tile {
+        align-items: center;
+        background: rgba(238, 228, 218, 0.35);
+        border-radius: 3px;
+        display: flex;
+        font-size: 32px;
+        font-weight: bold;
+        justify-content: center;
+        line-height: 1;
+        transition: background-color 0.1s ease-in-out;
+      }
+
+      .tile[data-value="2"] {
+        background: #eee4da;
+        color: #776e65;
+      }
+      .tile[data-value="4"] {
+        background: #ede0c8;
+        color: #776e65;
+      }
+      .tile[data-value="8"] {
+        background: #f2b179;
+        color: #f9f6f2;
+      }
+      .tile[data-value="16"] {
+        background: #f59563;
+        color: #f9f6f2;
+      }
+      .tile[data-value="32"] {
+        background: #f67c5f;
+        color: #f9f6f2;
+      }
+      .tile[data-value="64"] {
+        background: #f65e3b;
+        color: #f9f6f2;
+      }
+      .tile[data-value="128"] {
+        background: #edcf72;
+        color: #f9f6f2;
+        font-size: 28px;
+      }
+      .tile[data-value="256"] {
+        background: #edcc61;
+        color: #f9f6f2;
+        font-size: 28px;
+      }
+      .tile[data-value="512"] {
+        background: #edc850;
+        color: #f9f6f2;
+        font-size: 28px;
+      }
+      .tile[data-value="1024"] {
+        background: #edc53f;
+        color: #f9f6f2;
+        font-size: 22px;
+      }
+      .tile[data-value="2048"] {
+        background: #edc22e;
+        color: #f9f6f2;
+        font-size: 22px;
+      }
+
+      .decisions {
+        margin-top: 12px;
+      }
+
+      .decision-head {
+        color: #776e65;
+        font-size: 12px;
+        font-weight: bold;
+        letter-spacing: 0.08em;
+        margin: 0 0 6px;
+        text-transform: uppercase;
+      }
+
+      .bars {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .bar {
+        align-items: center;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 44px minmax(0, 1fr) 52px;
+      }
+
+      .bar-label {
+        color: #776e65;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .bar-track {
+        background: #eee4da;
+        border-radius: 3px;
+        height: 14px;
+        overflow: hidden;
+      }
+
+      .bar-fill {
+        background: #bbada0;
+        display: block;
+        height: 100%;
+      }
+
+      .bar-selected {
+        background: #f67c5f;
+      }
+
+      .bar-value {
+        color: #776e65;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+
+      .decision-note {
+        color: #776e65;
+        font-size: 12px;
+        font-weight: bold;
+        margin: 6px 0 0;
+      }
+
+      .status {
+        color: #776e65;
+        font-size: 13px;
+        font-weight: bold;
+        line-height: 1.45;
+        margin: 8px 0 0;
+        min-height: 38px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .progress {
+        background: #eee4da;
+        border-radius: 3px;
+        height: 6px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: #8f7a66;
+        display: block;
+        height: 100%;
+        width: 0;
+      }
+
+      .page-note {
+        color: #776e65;
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 24px 0 0;
+      }
+
+      @media (max-width: 1080px) {
+        .boards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 740px) {
+        h1 {
+          font-size: 44px;
+        }
+
+        .boards {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      @media (max-width: 420px) {
+        .board {
+          gap: 8px;
+          padding: 8px;
+        }
+
+        .tile {
+          font-size: 22px;
+        }
+
+        .tile[data-value="128"],
+        .tile[data-value="256"],
+        .tile[data-value="512"],
+        .tile[data-value="1024"],
+        .tile[data-value="2048"] {
+          font-size: 17px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game">
+      <div class="brand">System One <span class="brand-version">v1</span></div>
+
+      <div class="page-head">
+        <h1>2048</h1>
+        <p class="subtitle">SemIf · Jev · Laya</p>
+      </div>
+
+      <div class="controls">
+        <button id="reset-btn">New comparison</button>
+        <button id="ai-btn">Start all</button>
+        <!--<span class="seed">seed <span class="seed-value" id="seed"></span></span>-->
+      </div>
+
+      <div class="boards">
+        <section class="panel" aria-labelledby="semif-title">
+          <div class="panel-head">
+            <h2 id="semif-title">SemIf · MiniCPM5 2B</h2>
+            <div class="stats">
+              <div class="score-container">
+                <span>SCORE</span>
+                <div class="score-value" id="semif-score">0</div>
+              </div>
+              <div class="score-container stat">
+                <span>MOVES</span>
+                <div class="score-value" id="semif-moves">0</div>
+              </div>
+              <div class="score-container stat">
+                <span>TIME</span>
+                <div class="score-value" id="semif-time">0.0 s</div>
+              </div>
+            </div>
+          </div>
+          <div class="board" id="semif-grid" aria-label="SemIf board"></div>
+          <div class="decisions" id="semif-move-panel"></div>
+          <p class="status" id="semif-status" aria-live="polite"></p>
+          <div class="actions">
+            <button id="load-semif-btn">Load SemIf locally (1.56 GB)</button>
+            <button id="semif-start-btn">Start SemIf</button>
+          </div>
+          <div class="progress"><span class="progress-fill" id="semif-progress"></span></div>
+        </section>
+
+        <section class="panel" aria-labelledby="jev-title">
+          <div class="panel-head">
+            <h2 id="jev-title">Jev · Command Code</h2>
+            <div class="stats">
+              <div class="score-container">
+                <span>SCORE</span>
+                <div class="score-value" id="jev-score">0</div>
+              </div>
+              <div class="score-container stat">
+                <span>MOVES</span>
+                <div class="score-value" id="jev-moves">0</div>
+              </div>
+              <div class="score-container stat">
+                <span>TIME</span>
+                <div class="score-value" id="jev-time">0.0 s</div>
+              </div>
+            </div>
+          </div>
+          <div class="board" id="jev-grid" aria-label="Jev board"></div>
+          <div class="decisions" id="jev-move-panel"></div>
+          <p class="status" id="jev-status" aria-live="polite"></p>
+          <div class="actions">
+            <button id="jev-start-btn">Start Jev</button>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="laya-title">
+          <div class="panel-head">
+            <h2 id="laya-title">Local Laya</h2>
+            <div class="stats">
+              <div class="score-container">
+                <span>SCORE</span>
+                <div class="score-value" id="laya-score">0</div>
+              </div>
+              <div class="score-container stat">
+                <span>MOVES</span>
+                <div class="score-value" id="laya-moves">0</div>
+              </div>
+              <div class="score-container stat">
+                <span>TIME</span>
+                <div class="score-value" id="laya-time">0.0 s</div>
+              </div>
+            </div>
+          </div>
+          <div class="board" id="laya-grid" aria-label="Laya board"></div>
+          <div class="decisions" id="laya-move-panel"></div>
+          <p class="status" id="laya-status" aria-live="polite"></p>
+          <div class="actions">
+            <button id="laya-start-btn">Start Laya</button>
+          </div>
+        </section>
+      </div>
+
+      <p class="page-note">
+        All boards get the same seed and the same legal moves, and each round applies their moves
+        together. Every move comes from a model. Each bar is the probability that model assigned to
+        a legal direction, on a 0 to 100 percent scale shared by all three boards, and the move that
+        was applied is named below each list.
+      </p>
+    </main>
+
+    <script>
+      const GRID_SIZE = 4;
+      const CONFIDENCE_THRESHOLD = 0.55;
+      const MODEL_CONFIGS = [
+        { id: "semif", name: "SemIf · MiniCPM5 2B", client: "semif" },
+        { id: "jev", name: "Jev · Command Code", client: "fetch", endpoint: "/api/jev" },
+        { id: "laya", name: "Local Laya", client: "fetch", endpoint: "/api/laya" },
+      ];
+      let games = {};
+      let comparisonSeed = 0;
+      let runToken = 0;
+      let controller = null;
+      let semifReady = false;
+      let semifLoading = false;
+
+      function mulberry32(seed) {
+        return function () {
+          let t = (seed += 0x6d2b79f5);
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function createGame(config, seed) {
+        const game = {
+          ...config,
+          grid: Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0)),
+          score: 0,
+          moves: 0,
+          decisionMs: 0,
+          rng: mulberry32(seed),
+          active: false,
+          status: "Ready",
+        };
+        addRandomTile(game);
+        addRandomTile(game);
+        return game;
+      }
+
+      function addRandomTile(game) {
+        const emptyCells = [];
+        for (let row = 0; row < GRID_SIZE; row++) {
+          for (let column = 0; column < GRID_SIZE; column++) {
+            if (game.grid[row][column] === 0) emptyCells.push({ row, column });
+          }
+        }
+        if (!emptyCells.length) return;
+        const cell = emptyCells[Math.floor(game.rng() * emptyCells.length)];
+        game.grid[cell.row][cell.column] = game.rng() < 0.9 ? 2 : 4;
+      }
+
+      function renderMovePanel(game) {
+        const panel = document.getElementById(`${game.id}-move-panel`);
+        panel.innerHTML = "";
+        const decision = game.lastDecision;
+
+        const heading = document.createElement("p");
+        heading.className = "decision-head";
+        heading.innerText = "Next move";
+        panel.appendChild(heading);
+
+        const bars = document.createElement("div");
+        bars.className = "bars";
+
+        for (const direction of ["UP", "DOWN", "LEFT", "RIGHT"]) {
+          const probability = decision?.probabilities[direction];
+          const selected = decision?.move === direction;
+          const row = document.createElement("div");
+          row.className = "bar";
+          if (selected) row.setAttribute("aria-current", "true");
+
+          const label = document.createElement("span");
+          label.className = "bar-label";
+          label.innerText = direction;
+
+          const track = document.createElement("span");
+          track.className = "bar-track";
+          const fill = document.createElement("span");
+          fill.className = selected ? "bar-fill bar-selected" : "bar-fill";
+          fill.style.width = `${Math.round((probability ?? 0) * 100)}%`;
+          track.appendChild(fill);
+
+          const value = document.createElement("span");
+          value.className = "bar-value";
+          value.innerText = probability === undefined ? "not legal" : probability.toFixed(2);
+
+          row.appendChild(label);
+          row.appendChild(track);
+          row.appendChild(value);
+          bars.appendChild(row);
+        }
+
+        panel.appendChild(bars);
+
+        const note = document.createElement("p");
+        note.className = "decision-note";
+        note.innerText = decision ? `Executed move: ${decision.move}` : "No decision yet.";
+        panel.appendChild(note);
+      }
+
+      function renderGame(game) {
+        document.getElementById(`${game.id}-score`).innerText = game.score;
+        document.getElementById(`${game.id}-moves`).innerText = game.moves;
+        document.getElementById(`${game.id}-time`).innerText =
+          `${(game.decisionMs / 1000).toFixed(1)} s`;
+        document.getElementById(`${game.id}-status`).innerText = game.status;
+        renderMovePanel(game);
+        const container = document.getElementById(`${game.id}-grid`);
+        container.innerHTML = "";
+        for (const row of game.grid) {
+          for (const value of row) {
+            const tile = document.createElement("div");
+            tile.className = "tile";
+            if (value > 0) {
+              tile.innerText = value;
+              tile.setAttribute("data-value", value);
+              tile.setAttribute("data-filled", "true");
+            }
+            container.appendChild(tile);
+          }
+        }
+      }
+
+      function renderAll() {
+        for (const game of Object.values(games)) renderGame(game);
+        const button = document.getElementById("ai-btn");
+        button.innerText = controller ? "Stop all" : "Start all";
+        button.setAttribute("aria-pressed", String(Boolean(controller)));
+        for (const config of MODEL_CONFIGS) {
+          const game = games[config.id];
+          if (!game) continue;
+          const button = document.getElementById(`${config.id}-start-btn`);
+          const label = config.id.charAt(0).toUpperCase() + config.id.slice(1);
+          button.innerText = game.active ? `Stop ${label}` : `Start ${label}`;
+          button.setAttribute("aria-pressed", String(game.active));
+        }
+      }
+
+      function slideAndMergeRow(row) {
+        const values = row.filter((value) => value !== 0);
+        const next = [];
+        let gainedScore = 0;
+        for (let index = 0; index < values.length; index++) {
+          if (values[index] === values[index + 1]) {
+            const merged = values[index] * 2;
+            next.push(merged);
+            gainedScore += merged;
+            index++;
+          } else {
+            next.push(values[index]);
+          }
+        }
+        while (next.length < GRID_SIZE) next.push(0);
+        return { row: next, gainedScore };
+      }
+
+      function rotateLeft(matrix) {
+        return matrix[0].map((_, column) => matrix.map((row) => row[column])).reverse();
+      }
+
+      function rotateRight(matrix) {
+        return matrix[0].map((_, column) => matrix.map((row) => row[column]).reverse());
+      }
+
+      function reverseRows(matrix) {
+        return matrix.map((row) => [...row].reverse());
+      }
+
+      function executeMove(board, direction) {
+        let nextBoard = board.map((row) => [...row]);
+        let moveScore = 0;
+        let changed = false;
+        if (direction === "UP") nextBoard = rotateLeft(nextBoard);
+        else if (direction === "RIGHT") nextBoard = reverseRows(nextBoard);
+        else if (direction === "DOWN") nextBoard = rotateRight(nextBoard);
+
+        for (let rowIndex = 0; rowIndex < GRID_SIZE; rowIndex++) {
+          const result = slideAndMergeRow(nextBoard[rowIndex]);
+          if (result.row.join(",") !== nextBoard[rowIndex].join(",")) changed = true;
+          nextBoard[rowIndex] = result.row;
+          moveScore += result.gainedScore;
+        }
+
+        if (direction === "UP") nextBoard = rotateRight(nextBoard);
+        else if (direction === "RIGHT") nextBoard = reverseRows(nextBoard);
+        else if (direction === "DOWN") nextBoard = rotateLeft(nextBoard);
+        return { board: nextBoard, score: moveScore, changed };
+      }
+
+      function getLegalMoves(game) {
+        return ["LEFT", "UP", "RIGHT", "DOWN"].flatMap((direction) => {
+          const result = executeMove(game.grid, direction);
+          return result.changed
+            ? [{ direction, board: result.board, gainedScore: result.score }]
+            : [];
+        });
+      }
+
+      function move(game, direction) {
+        const result = executeMove(game.grid, direction);
+        if (!result.changed) return;
+        game.grid = result.board;
+        game.score += result.score;
+        addRandomTile(game);
+        if (!getLegalMoves(game).length) {
+          game.active = false;
+          game.status = "Game over";
+        }
+      }
+
+      function setSemifLoaded() {
+        semifReady = true;
+        semifLoading = false;
+        document.getElementById("semif-progress").style.width = "100%";
+        const loadButton = document.getElementById("load-semif-btn");
+        loadButton.disabled = true;
+        loadButton.innerText = "SemIf model ready locally";
+        if (games.semif) {
+          games.semif.status = "SemIf model ready locally";
+          renderGame(games.semif);
+        }
+      }
+
+      async function syncSemifStatus() {
+        try {
+          const response = await fetch("/api/semif/status");
+          const status = await response.json();
+          if (response.ok && status.ready) setSemifLoaded();
+        } catch {}
+      }
+
+      async function loadSemifModel() {
+        if (semifReady || semifLoading) return;
+        semifLoading = true;
+        const loadButton = document.getElementById("load-semif-btn");
+        loadButton.disabled = true;
+        loadButton.innerText = "Loading SemIf locally…";
+        document.getElementById("semif-progress").style.width = "0%";
+        if (games.semif) {
+          games.semif.status = "Starting local model; first load downloads about 1.56 GB…";
+          renderGame(games.semif);
+        }
+        try {
+          const response = await fetch("/api/semif/load", { method: "POST" });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || "Local SemIf model load failed");
+          setSemifLoaded();
+        } catch (error) {
+          semifLoading = false;
+          loadButton.disabled = false;
+          loadButton.innerText = "Retry local SemIf load";
+          if (games.semif) {
+            games.semif.status = error instanceof Error ? error.message : "Local SemIf load failed";
+            renderGame(games.semif);
+          }
+        }
+      }
+
+      async function postDecision(endpoint, game, legalMoves, signal, fallbackMessage, onUnavailable) {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ board: game.grid, score: game.score, legalMoves }),
+          signal,
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          if (response.status === 503) onUnavailable?.();
+          throw new Error(result.error || fallbackMessage);
+        }
+        return result;
+      }
+
+      async function requestDecision(game, legalMoves, signal) {
+        if (game.client !== "semif") {
+          return postDecision(game.endpoint, game, legalMoves, signal, `${game.name} request failed`);
+        }
+        if (!semifReady) throw new Error("SemIf model is not loaded. Use Load SemIf model.");
+        return postDecision("/api/semif", game, legalMoves, signal, "SemIf local inference failed", () => {
+          semifReady = false;
+          const loadButton = document.getElementById("load-semif-btn");
+          loadButton.disabled = false;
+          loadButton.innerText = "Retry local SemIf load";
+        });
+      }
+
+      function formatProbabilities(probabilities) {
+        return Object.entries(probabilities)
+          .sort(([, first], [, second]) => second - first)
+          .map(([direction, probability]) => `${direction} ${Math.round(probability * 100)}%`)
+          .join(" · ");
+      }
+
+      function logStep(game, decision) {
+        console.log(
+          `[${game.name}] score=${game.score} move=${decision?.move ?? "-"} confidence=${decision ? Math.round(decision.confidence * 100) + "%" : "-"}`,
+          JSON.stringify(game.grid),
+        );
+      }
+
+      function collectCandidates() {
+        const candidates = [];
+        for (const game of Object.values(games).filter((item) => item.active)) {
+          const legalMoves = getLegalMoves(game);
+          if (!legalMoves.length) {
+            game.active = false;
+            game.status = "Game over";
+          } else {
+            game.status = `${game.name} is deciding`;
+            candidates.push({ game, legalMoves });
+          }
+        }
+        renderAll();
+        return candidates;
+      }
+
+      function requestCandidates(candidates, signal) {
+        return Promise.allSettled(
+          candidates.map(async ({ game, legalMoves }) => {
+            const started = performance.now();
+            const decision = await requestDecision(game, legalMoves, signal);
+            return { decision, elapsed: performance.now() - started };
+          }),
+        );
+      }
+
+      function applyCandidateResults(candidates, results) {
+        results.forEach((result, index) => {
+          const game = candidates[index].game;
+          if (result.status === "rejected") {
+            game.active = false;
+            game.status =
+              result.reason instanceof Error
+                ? result.reason.message
+                : `${game.name} request failed`;
+            return;
+          }
+          const { decision, elapsed } = result.value;
+          game.moves += 1;
+          game.decisionMs += elapsed;
+          const detail = formatProbabilities(decision.probabilities);
+          game.status =
+            `${game.name} chose ${decision.move}, ${Math.round(decision.confidence * 100)}%` +
+            `${decision.confidence < CONFIDENCE_THRESHOLD ? " (low)" : ""}. ${detail}`;
+          move(game, decision.move);
+          game.lastDecision = decision;
+          logStep(game, decision);
+        });
+        renderAll();
+      }
+
+      async function comparisonStep(token, signal) {
+        if (token !== runToken) return;
+        const candidates = collectCandidates();
+        if (!candidates.length) {
+          controller = null;
+          renderAll();
+          return;
+        }
+
+        const results = await requestCandidates(candidates, signal);
+        if (token !== runToken) return;
+        applyCandidateResults(candidates, results);
+
+        if (Object.values(games).some((game) => game.active)) {
+          setTimeout(() => comparisonStep(token, signal), 160);
+        } else {
+          controller = null;
+          renderAll();
+        }
+      }
+
+      function startComparison(ids) {
+        for (const game of Object.values(games)) {
+          if (ids.includes(game.id) && !game.active) {
+            game.active = true;
+            game.status = "Starting";
+          }
+        }
+        if (!controller) {
+          const token = ++runToken;
+          controller = new AbortController();
+          comparisonStep(token, controller.signal);
+        }
+        renderAll();
+      }
+
+      function stopComparison(message) {
+        runToken++;
+        controller?.abort();
+        controller = null;
+        for (const game of Object.values(games)) {
+          if (game.active && message) game.status = message;
+          game.active = false;
+        }
+        if (Object.keys(games).length) renderAll();
+      }
+
+      function toggleComparison() {
+        if (controller) {
+          stopComparison("Comparison stopped");
+          return;
+        }
+        startComparison(MODEL_CONFIGS.map((config) => config.id));
+      }
+
+      function toggleModel(id) {
+        const game = games[id];
+        if (!game.active) {
+          startComparison([id]);
+          return;
+        }
+        game.active = false;
+        const name = id === "semif" ? "SemIf" : `${id[0].toUpperCase()}${id.slice(1)}`;
+        game.status = `${name} stopped`;
+        if (!Object.values(games).some((item) => item.active)) stopComparison();
+        renderAll();
+      }
+
+      function newComparison() {
+        stopComparison();
+        comparisonSeed = crypto.getRandomValues(new Uint32Array(1))[0];
+        games = Object.fromEntries(
+          MODEL_CONFIGS.map((config) => [config.id, createGame(config, comparisonSeed)]),
+        );
+        const seed = document.getElementById("seed");
+        if (seed) seed.innerText = comparisonSeed;
+        for (const game of Object.values(games)) {
+          console.log(
+            `[${game.name}] new comparison seed=${comparisonSeed}`,
+            JSON.stringify(game.grid),
+          );
+        }
+        renderAll();
+      }
+
+      document.getElementById("load-semif-btn").addEventListener("click", loadSemifModel);
+      document.getElementById("reset-btn").addEventListener("click", newComparison);
+      document.getElementById("ai-btn").addEventListener("click", toggleComparison);
+      document.getElementById("jev-start-btn").addEventListener("click", () => toggleModel("jev"));
+      document.getElementById("laya-start-btn").addEventListener("click", () => toggleModel("laya"));
+      document.getElementById("semif-start-btn").addEventListener("click", () => toggleModel("semif"));
+      newComparison();
+      syncSemifStatus();
+    </script>
+  </body>
+</html>

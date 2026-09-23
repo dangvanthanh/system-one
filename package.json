@@ -1,0 +1,11 @@
+{
+  "name": "system-one",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "hono": "4.13.8"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.2"
+  }
+}
